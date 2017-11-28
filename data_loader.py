@@ -31,19 +31,19 @@ def prepare_training_data(version = 2, data_dir = 'Data'):
 			return data
 
 	print "Loading Training questions"
-with open(t_q_json_file) as f:
+	with open(t_q_json_file) as f:
 		t_questions = json.loads(f.read())
 	
-print "Loading Training anwers"
-with open(t_a_json_file) as f:
+	print "Loading Training anwers"
+	with open(t_a_json_file) as f:
 		t_answers = json.loads(f.read())
 
 	print "Loading Val questions"
-with open(v_q_json_file) as f:
+	with open(v_q_json_file) as f:
 		v_questions = json.loads(f.read())
 	
 	print "Loading Val answers"
-with open(v_a_json_file) as f:
+	with open(v_a_json_file) as f:
 		v_answers = json.loads(f.read())
 
 	
@@ -52,7 +52,6 @@ with open(v_a_json_file) as f:
 
 	answers = t_answers['annotations'] + v_answers['annotations']
 	questions = t_questions['questions'] + v_questions['questions']
-
 	
 	answer_vocab = make_answer_vocab(answers)
 	question_vocab, max_question_length = make_questions_vocab(questions, answers, answer_vocab)
@@ -144,7 +143,6 @@ def make_answer_vocab(answers):
 	for i, ans_freq in enumerate(answer_frequency_tuples):
 		# print i, ans_freq
 		ans = ans_freq[1]
-		print ans
 		answer_vocab[ans] = i
 
 	answer_vocab['UNK'] = top_n - 1
