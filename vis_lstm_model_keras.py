@@ -16,7 +16,7 @@ def build_model(self,options):
 
     image_model = Sequential()
     image_model.add(Dense(
-        output_dim=512,
+        512,
         input_dim=4096,
         activation='linear'))
    
