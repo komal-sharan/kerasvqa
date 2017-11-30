@@ -1,50 +1,59 @@
 import numpy as np
-import prepare_data
+import data_loader
 import models
 import argparse
 import sys
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-num_epochs', type=int, default=25)
-    parser.add_argument('-batch_size', type=int, default=200)
-    parser.add_argument('-model', type=int, default=1)
-    args = parser.parse_args()
 
-    print('Loading questions ...')
-    questions_train = prepare_data.get_questions_matrix('train')
-    questions_val = prepare_data.get_questions_matrix('val')
-    print('Loading answers ...')
-    answers_train = prepare_data.get_answers_matrix('train')
-    answers_val = prepare_data.get_answers_matrix('val')
-    print('Loading image features ...')
-    img_features_train = prepare_data.get_coco_features('train')
-    img_features_val = prepare_data.get_coco_features('val')
-    print('Creating model ...')
+    qa_data = data_loader.load_questions_answers(1, 'Data')
+    qa_train = qa_data['training']
+   
+    fc7_features, image_id_list = data_loader.load_fc7_features('Data', 'train')
+    image_id_map = {}
+    for i in xrange(len(image_id_list)):
+        image_id_map[image_id_list[i]] = i
 
-    if args.model == 1:
-        model = models.vis_lstm()
-        X_train = [img_features_train, questions_train]
-        X_val = [img_features_val, questions_val]
-        model_path = 'weights/model_1.h5'
-    elif args.model == 2:
-        model = models.vis_lstm_2()
-        X_train = [img_features_train, questions_train, img_features_train]
-        X_val = [img_features_val, questions_val, img_features_val]
-        model_path = 'weights/model_2.h5'
-    else:
-        print('Invalid model selection!\nAvailable choices: 1 for vis-lstm and 2 for 2-vis-lstm.')
-        sys.exit()
+    sentence_train = np.ndarray((len(qa_train), qa_data['max_question_length']), dtype='int32');
+    answer_train = np.zeros((len(qa_train), len(qa_data['answer_vocab'])));
+    fc7_train = np.ndarray((len(qa_train), 4096));
+  
+    for i in range(0, len(qa_train)):
+        sentence_train[i, :] = qa_train[i]['question'][:]
+        answer_train[i, qa_train[i]['answer']] = 1.0
+        fc7_index = image_id_map[qa_train[i]['image_id']]
+        fc7_train[i, :] = fc7_features[fc7_index][:]
+
+    qa_val = qa_data['validation']
+
+    
+   
+
+    sentence_val = np.ndarray((len(qa_val), qa_data['max_question_length']), dtype='int32');
+    answer_val = np.zeros((len(qa_val), len(qa_data['answer_vocab'])));
+    
+     
+    for i in range(0, len(qa_val)):
+        sentence_val[i, :] = qa_val[i]['question'][:]
+        answer_val[i, qa[i]['answer']] = 1.0
+        fc7_train[i, :] = fc7_features[fc7_index][:]
+        
+
+    model = models.vis_lstm()
+    X_train = [fc7_train, sentence_train]
+    X_val = [fc7_train, sentence_val]
+    model_path = 'weights/model_1.h5'
+   
 
     model.compile(optimizer='adam',
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
-    model.fit(X_train, answers_train,
+    model.fit(X_train, answer_train,
               nb_epoch=args.num_epochs,
               batch_size=args.batch_size,
-              validation_data=(X_val, answers_val),
+              validation_data=(X_val, answer_val),
               verbose=1)
 
     model.save(model_path)
